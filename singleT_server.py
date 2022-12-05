@@ -1,4 +1,6 @@
 from socket import *
+import time
+import select
 
 def createSocket(hostName, portNumber):
 
@@ -24,35 +26,36 @@ def main():
 
     mySocket.listen(1)
 
+    timeLeft = 5 # 5 Seconds set for timeout
+
     while True:
+
         (clientSocket, address) = mySocket.accept()
 
-        sentence = clientSocket.recv(1024).decode()
-
-        # 400 Bad Request Checker
-        if not sentence:
-            clientSocket.sendall("HTTP/1.1 400 Bad Request\n" + sentence)
-            break
+        whatReady = select.select([clientSocket], [], [], timeLeft)
+        if whatReady[0]:
+            sentence = clientSocket.recv(1024).decode()
+        elif whatReady[0] == []: # 408 Request Timed Out
+            clientSocket.sendall(("HTTP/1.1 408 Request Timed Out\n" + sentence).encode())
 
         sent_partition = sentence.partition('/test.html')
 
-        # 404 File not found error checkers
-        if(sent_partition[1] == "/test.html"):
-            print("1")
-            if(sent_partition[2][0] != " "):
-                print("2")
-                clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
-                break
-        elif(sent_partition[1] != "/test.html"):
-            print("3")
-            clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
-            break
+        # 400 Bad Request Checker
+        if not sentence:
+            clientSocket.sendall(("HTTP/1.1 400 Bad Request\n" + sentence).encode())
 
-        clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
+        # 404 File not found error checkers
+        elif ((sent_partition[1] == "/test.html") and (sent_partition[2][0] != " ")):
+            clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
+        elif (sent_partition[1] != "/test.html"):
+            clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
+
+        # 200 OK
+        else:
+            clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
 
         clientSocket.close()
         
-    mySocket.close()
 
 
 main()
