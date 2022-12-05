@@ -11,7 +11,7 @@ def createSocket(hostName, portNumber):
 def main():
     print('Hello World')
 
-    # Stores the test.html into a string so we can send to the browser as a request
+    # Stores the test.html into a string so we can send to the browser as a respone
     testFile = open('test.html')
     testFile_html = testFile.read()
     testFile.close()
@@ -27,8 +27,8 @@ def main():
     while True:
         (clientSocket, address) = mySocket.accept()
 
-        # sentence = clientSocket.recv(1024).decode()
-
+        sentence = clientSocket.recv(1024).decode()
+        print(sentence)
         # clientsocket.send(sentence.encode())
 
         clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
