@@ -1,6 +1,7 @@
 from socket import *
 import time
 import select
+import requests
 
 def createSocket(hostName, portNumber):
 
@@ -21,6 +22,7 @@ def main():
     portNumber = 371 # For CMPT 371 :)
 
     mySocket = createSocket(hostName, portNumber)
+    response = requests.get('https://api.github.com')
 
     mySocket.listen(1)
 
@@ -54,9 +56,12 @@ def main():
         elif (file_partition[1] != "/test.html"):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + html_msg).encode())
 
-        #200 OK
+        #200 OK and 304 not modified since
         else:
-            clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
+            if response.status_code == 304:
+                clientSocket.sendall(("HTTP/1.1 304 Not Modified\n" + html_msg).encode())
+            else:
+                clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
 
         clientSocket.close()
         
