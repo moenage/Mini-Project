@@ -24,31 +24,32 @@ def main():
 
     mySocket.listen(1)
 
-    # timeLeft = 0.000000000000000001 # Time used to test the 408 Timed Out CHecker
-    timeLeft = 5 # 5 seconds used for timeout
+    timeLeft = 5 # 5 Seconds set for timeout
+    # timeLeft = 0.000000000000000000000001 #Time to test 408 Request Timed Out
 
     while True:
 
         (clientSocket, address) = mySocket.accept()
 
-        html_msg = clientSocket.recv(1024).decode()
-
-        GET_partition = html_msg.partition('GET')
-        file_partition = html_msg.partition('/test.html')
-
-        # 408 Request Timed Out Checker
         whatReady = select.select([clientSocket], [], [], timeLeft)
-        if whatReady[0] == []: 
+        if whatReady[0]:
+            html_msg = clientSocket.recv(1024).decode()
+            GET_partition = html_msg.partition('GET')
+            file_partition = html_msg.partition('/test.html')
+        elif whatReady[0] == []: # 408 Request Timed Out
+            html_msg = clientSocket.recv(1024).decode()
             clientSocket.sendall(("HTTP/1.1 408 Request Timed Out\n" + html_msg).encode())
+            clientSocket.close()
+            continue
 
         # 400 Bad Request Checker
-        elif (GET_partition[1] == "GET") and (GET_partition[2][0] != " "):
+        if ((GET_partition[1] == "GET") and (GET_partition[2][0] != " ") and (GET_partition[0] == '')):
             clientSocket.sendall(("HTTP/1.1 400 Bad Request\n" + html_msg).encode())
         elif (GET_partition[1] != "GET"):
             clientSocket.sendall(("HTTP/1.1 400 Bad Request\n" + html_msg).encode())
 
         # 404 File not found error checkers
-        elif ((file_partition[1] == "/test.html") and (file_partition[2][0] != " ")):
+        elif ((file_partition[1] == "/test.html") and (file_partition[2][0] != " ") and (file_partition[0] == "GET ")):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + html_msg).encode())
         elif (file_partition[1] != "/test.html"):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + html_msg).encode())
