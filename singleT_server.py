@@ -8,8 +8,6 @@ def createSocket(hostName, portNumber):
     mySocket.bind((hostName, portNumber))
     return mySocket
 
-
-
 def main():
     # print('Hello World')
 
@@ -38,16 +36,19 @@ def main():
         elif whatReady[0] == []: # 408 Request Timed Out
             clientSocket.sendall(("HTTP/1.1 408 Request Timed Out\n" + sentence).encode())
 
-        sent_partition = sentence.partition('/test.html')
+        GET_partition = sentence.partition('GET')
+        file_partition = sentence.partition('/test.html')
 
         # 400 Bad Request Checker
-        if not sentence:
+        if (GET_partition[1] == "GET") and (GET_partition[2][0] != " "):
+            clientSocket.sendall(("HTTP/1.1 400 Bad Request\n" + sentence).encode())
+        elif (GET_partition[1] != "GET"):
             clientSocket.sendall(("HTTP/1.1 400 Bad Request\n" + sentence).encode())
 
         # 404 File not found error checkers
-        elif ((sent_partition[1] == "/test.html") and (sent_partition[2][0] != " ")):
+        elif ((file_partition[1] == "/test.html") and (file_partition[2][0] != " ")):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
-        elif (sent_partition[1] != "/test.html"):
+        elif (file_partition[1] != "/test.html"):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + sentence).encode())
 
         # 200 OK
