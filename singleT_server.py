@@ -53,7 +53,7 @@ def main():
         elif (file_partition[1] != "/test.html"):
             clientSocket.sendall(("HTTP/1.1 404 Not Found\n" + html_msg).encode())
 
-        # 200 OK
+        #200 OK
         else:
             clientSocket.sendall(("HTTP/1.1 200 OK\n" + testFile_html).encode())
 
